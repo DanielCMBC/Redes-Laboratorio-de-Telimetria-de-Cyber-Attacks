@@ -106,7 +106,7 @@ A rede `intnet` não possui servidor DHCP: todas as máquinas usam **IP estátic
 | Wazuh v4.14.10 OVA | Amazon Linux 2023 | 4 | 3 GB | `D:\Wazuh v4.14.10 OVA` |
 | Ubuntu_Server | Ubuntu Server 24.04.5 LTS | 4 | 8 GB | `D:\Ubuntu_Server` |
 | Kali Linux | Kali Linux 2026.3 | 1 | 2 GB | `D:\Kali Linux` |
-| OpnSense Backup | OPNsense (não utilizada no cenário atual) | 2 | 2 GB | `D:\OpnSense Backup` |
+| OpnSense Backup | OPNsense, firewall secundário da HA (opcional, não utilizado no cenário do SMTP) | 2 | 2 GB | `D:\OpnSense Backup` |
 
 Hospedeiro: Windows 10, AMD Ryzen 5 5500 (12 threads), 16 GB de RAM, VirtualBox 7.2.
 
@@ -372,6 +372,9 @@ O código deste repositório (pastas `mail/`, `soc-thehive/` etc.) é o mesmo qu
 | Wazuh | `Wazuh.ova` | SIEM/XDR |
 | Ubuntu_Server | `Ubuntu_Server.ova` | TheHive, Cortex, MISP, servidor SMTP e WebMail |
 | Kali Linux | `Kali_Linux.ova` | Estação do analista e cliente que envia os e-mails |
+| OpnSense Backup | `OpnSense_Backup.ova` | Firewall secundário da alta disponibilidade (CARP/pfsync); **opcional**, não é usado no cenário do SMTP |
+
+A VM **OpnSense Backup** usa a rede NAT `InternetSim` na WAN e a rede interna `pfsync` para sincronizar com o firewall principal. Para usá-la, crie também a rede NAT `InternetSim` (Passo 5). Ela não é necessária para a demonstração do servidor SMTP.
 
 Cada `.ova` foi dividido em partes numeradas (`Nome.ova.001`, `Nome.ova.002`...). O arquivo `SHA256SUMS.txt` contém o código de verificação de cada `.ova` completo.
 
@@ -386,7 +389,7 @@ Cada `.ova` foi dividido em partes numeradas (`Nome.ova.001`, `Nome.ova.002`...)
 No Windows (PowerShell, dentro da pasta das partes):
 
 ```powershell
-foreach ($vm in 'OpnSense','Wazuh','Ubuntu_Server','Kali_Linux') {
+foreach ($vm in 'OpnSense','Wazuh','Ubuntu_Server','Kali_Linux','OpnSense_Backup') {
   $partes = Get-ChildItem "$vm.ova.*" | Sort-Object Name
   $saida = [IO.File]::Create("$PWD\$vm.ova")
   foreach ($p in $partes) { $in = [IO.File]::OpenRead($p.FullName); $in.CopyTo($saida); $in.Close() }
@@ -397,7 +400,7 @@ foreach ($vm in 'OpnSense','Wazuh','Ubuntu_Server','Kali_Linux') {
 No Linux:
 
 ```bash
-for vm in OpnSense Wazuh Ubuntu_Server Kali_Linux; do cat "$vm".ova.0* > "$vm".ova; done
+for vm in OpnSense Wazuh Ubuntu_Server Kali_Linux OpnSense_Backup; do cat "$vm".ova.0* > "$vm".ova; done
 ```
 
 **Passo 4 — Verificar a integridade.** Compare o resultado com o `SHA256SUMS.txt`. Se algum código for diferente, baixe novamente as partes daquela VM.
