@@ -1,0 +1,8 @@
+# /etc/systemd/network/30-hostonly.network - Wazuh (rede host-only, acesso pelo Windows)
+[Match]
+MACAddress=08:00:27:0d:b5:70
+
+[Network]
+Address=192.168.56.20/24
+IPv6AcceptRA=no
+LinkLocalAddressing=no

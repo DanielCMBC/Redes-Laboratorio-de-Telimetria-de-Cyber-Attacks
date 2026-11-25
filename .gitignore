@@ -1,0 +1,9 @@
+# Segredos e dados gerados - nunca enviar ao GitHub
+.env
+**/logs/
+**/ssl/*.pem
+**/truststore/
+*.vdi
+*.vmdk
+*.ova
+*.sav

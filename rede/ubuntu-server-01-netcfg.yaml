@@ -1,0 +1,14 @@
+# /etc/netplan/01-netcfg.yaml - Ubuntu_Server (servidor SOC + SMTP)
+network:
+  version: 2
+  ethernets:
+    enp0s3:
+      dhcp4: false
+      addresses:
+        - 10.200.200.30/24
+      routes:
+        - to: default
+          via: 10.200.200.254
+      nameservers:
+        addresses:
+          - 10.200.200.254
