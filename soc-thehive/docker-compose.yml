@@ -1,0 +1,108 @@
+services:
+  cassandra:
+    image: cassandra:4.1
+    container_name: cassandra
+    restart: unless-stopped
+    environment:
+      - CASSANDRA_CLUSTER_NAME=TheHive
+      - MAX_HEAP_SIZE=1024M
+      - HEAP_NEWSIZE=256M
+    volumes:
+      - cassandra-data:/var/lib/cassandra
+    healthcheck:
+      test: ["CMD-SHELL", "cqlsh -e 'describe keyspaces' > /dev/null 2>&1"]
+      interval: 30s
+      timeout: 10s
+      retries: 10
+      start_period: 90s
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.17.24
+    container_name: elasticsearch
+    restart: unless-stopped
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - ES_JAVA_OPTS=-Xms1g -Xmx1g
+    volumes:
+      - es-data:/usr/share/elasticsearch/data
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fs 'http://localhost:9200/_cluster/health?wait_for_status=yellow&timeout=5s' || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 10
+      start_period: 60s
+
+  minio:
+    image: pgsty/minio:latest
+    container_name: minio
+    restart: unless-stopped
+    command: server /data --console-address ":9090"
+    environment:
+      - MINIO_ROOT_USER=${MINIO_USER}
+      - MINIO_ROOT_PASSWORD=${MINIO_PASSWORD}
+    volumes:
+      - minio-data:/data
+    ports:
+      - "9090:9090"
+
+  thehive:
+    image: strangebee/thehive:5.4
+    container_name: thehive
+    restart: unless-stopped
+    depends_on:
+      cassandra:
+        condition: service_healthy
+      elasticsearch:
+        condition: service_healthy
+      minio:
+        condition: service_started
+    ports:
+      - "9000:9000"
+    volumes:
+      - ./truststore/cacerts:/usr/lib/jvm/java-11-amazon-corretto/lib/security/cacerts:ro
+    command:
+      - "--secret"
+      - "${THEHIVE_SECRET}"
+      - "--cql-hostnames"
+      - "cassandra"
+      - "--index-backend"
+      - "elasticsearch"
+      - "--es-hostnames"
+      - "elasticsearch"
+      - "--s3-endpoint"
+      - "http://minio:9000"
+      - "--s3-access-key"
+      - "${MINIO_USER}"
+      - "--s3-secret-key"
+      - "${MINIO_PASSWORD}"
+      - "--s3-bucket"
+      - "thehive"
+      - "--s3-use-path-access-style"
+
+  cortex:
+    image: thehiveproject/cortex:3.1.8
+    container_name: cortex
+    restart: unless-stopped
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+    ports:
+      - "9001:9001"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /tmp/cortex-jobs:/tmp/cortex-jobs
+    command:
+      - "--es-uri"
+      - "http://elasticsearch:9200"
+      - "--job-directory"
+      - "/tmp/cortex-jobs"
+      - "--docker-job-directory"
+      - "/tmp/cortex-jobs"
+      - "--secret"
+      - "${CORTEX_SECRET}"
+
+volumes:
+  cassandra-data:
+  es-data:
+  minio-data:

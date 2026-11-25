@@ -1,0 +1,6 @@
+# Alteracoes feitas no .env do MISP (copiado de template.env do misp-docker)
+# Nao publique o .env real: ele contem a senha do administrador.
+BASE_URL=https://10.200.200.30
+ADMIN_EMAIL=admin@admin.test
+ADMIN_ORG=SOC-Lab
+ADMIN_PASSWORD=<senha forte gerada; ver .env no servidor>

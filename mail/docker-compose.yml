@@ -1,0 +1,29 @@
+services:
+  smtp:
+    build: .
+    image: soclab/postfix:1.0
+    container_name: smtp-server
+    hostname: mail
+    restart: unless-stopped
+    ports:
+      - "25:25"
+    volumes:
+      - ./logs:/var/log/postfix
+      - maildata:/var/mail
+
+  webmail:
+    build: ./webmail
+    image: soclab/webmail:1.0
+    container_name: webmail
+    restart: unless-stopped
+    depends_on:
+      - smtp
+    environment:
+      - SMTP_HOST=smtp
+    ports:
+      - "8080:8080"
+    volumes:
+      - maildata:/var/mail:ro
+
+volumes:
+  maildata:

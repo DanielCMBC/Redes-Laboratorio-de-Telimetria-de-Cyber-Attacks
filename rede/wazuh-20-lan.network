@@ -1,0 +1,11 @@
+# /etc/systemd/network/20-lan.network - Wazuh (Amazon Linux 2023)
+# Associado pelo MAC para nao depender da ordem eth0/eth1
+[Match]
+MACAddress=08:00:27:57:84:74
+
+[Network]
+Address=10.200.200.20/24
+Gateway=10.200.200.254
+DNS=10.200.200.254
+IPv6AcceptRA=no
+LinkLocalAddressing=no
